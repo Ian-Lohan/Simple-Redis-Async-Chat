@@ -38,21 +38,14 @@ def verify_token(token, expiration=3600):
         return None
     return username
 
-
-# Função para atualizar a lista de usuários online
-def update_users_list():
-    users = list(redis_client.smembers('logged_in_users'))
-    socketio.emit('update_users', users, to=None)
-
 # Rota para login
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        color = request.form['color']
         # Verifica se o usuario está cadastrado
-        if username and password and color:
+        if username and password:
             user_data = redis_client.hget('users', username)
             if user_data:
                 stored_email, stored_password, stored_color = user_data.split(':')
@@ -118,15 +111,14 @@ def register():
             username = request.form['username']
             email = request.form['email']
             password = request.form['password']
-            color = request.form['color']
             # Verifica se o usuário já está cadastrado
             if redis_client.hexists('users', username):
                 return 'Usuário já cadastrado!', 400
             # Armazena as informações do usuário em Redis
-            redis_client.hset('users', username, f"{email}:{password}:{color}")
+            redis_client.hset('users', username, f"{email}:{password}:#000000")
             redis_client.hset('emails', email, username)
             session['username'] = username
-            session['color'] = color
+            session['color'] = '#000000'
             redis_client.sadd('logged_in_users', username)
             return redirect(url_for('chat'))
         except Exception as e:
@@ -168,11 +160,40 @@ def handle_send_message(data):
         redis_client.rpush('chat_messages', f"{username}:{color}:{message}")
         emit('receive_message', {'username': username, 'message': message, 'color': color}, broadcast=True)
 
+# Evento para trocar a cor do usuário
+@socketio.on('change_color')
+def handle_change_color(data):
+    new_color = data['color']
+    username = session.get('username')
+    if username and new_color:
+        user_data = redis_client.hget('users', username)
+        if user_data:
+            email, password, _ = user_data.split(':')
+            redis_client.hset('users', username, f"{email}:{password}:{new_color}")
+            session['color'] = new_color
+            update_users_list()
+
+# Evento para indicar que o usuário está digitando
+@socketio.on('typing')
+def handle_typing(data):
+    username = data['username']
+    emit('typing', {'username': username}, broadcast=True, include_self=False)
+
 # Rota para obter mensagens do Redis
 @app.route('/messages')
 def get_messages():
     messages = redis_client.lrange('chat_messages', 0, -1)
     return {'messages': messages}
+
+# Função para atualizar a lista de usuários online
+def update_users_list():
+    users = []
+    for username in redis_client.smembers('logged_in_users'):
+        user_data = redis_client.hget('users', username)
+        if user_data:
+            _, _, color = user_data.split(':')
+            users.append({'username': username, 'color': color})
+    socketio.emit('update_users', users, to=None)
 
 if __name__ == '__main__':
     socketio.run(app)
