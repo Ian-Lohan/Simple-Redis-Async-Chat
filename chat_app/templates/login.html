@@ -11,8 +11,8 @@
     <form action="/" method="POST">
       <p>Digite seu nome de usuário e selecione uma cor!</p>
       <div class="user-input">
-        <label for="username">Insira seu nome ou e-mail:</label>
-        <input type="text" id="username" name="username" placeholder="Digite seu nome ou e-mail" required>
+        <label for="username">Insira seu nome:</label>
+        <input type="text" id="username" name="username" placeholder="Digite seu nome" required>
         <label for="password">Insira sua senha:</label>
         <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
         <div class="color-picker" id="color-picker">
@@ -21,6 +21,7 @@
         <button type="submit">Entrar</button>
       </div>
       <p>Não tem uma conta? <a href="{{ url_for('register') }}"> Cadastre-se aqui</a></p>
+      <p>Esqueceu sua senha? <a href="{{ url_for('forgot_password') }}">Recuperar senha</a></p>
     </form>
   </div>
   <script>
