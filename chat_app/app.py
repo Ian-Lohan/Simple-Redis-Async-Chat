@@ -86,6 +86,9 @@ def reset_password(token):
         return 'Token inválido ou expirado!', 400
     if request.method == 'POST':
         new_password = request.form['password']
+        confirm_password = request.form['password-confirm']
+        if new_password != confirm_password:
+            return 'As senhas não correspondem. Por favor, tente novamente.', 400
         # Atualiza a senha do usuário no Redis
         user_data = redis_client.hget('users', username)
         if user_data:
@@ -107,6 +110,10 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        password = request.form['password']
+        confirm_password = request.form['password-confirm']
+        if password != confirm_password:
+            return 'As senhas não correspondem. Por favor, tente novamente.', 400
         try:
             username = request.form['username']
             email = request.form['email']
@@ -139,6 +146,8 @@ def handle_connect(auth):
     if username:
         redis_client.sadd('logged_in_users', username)
         update_users_list()
+        login_message = f"{username} entrou no chat."
+        redis_client.rpush('chat_messages', f"system::{login_message}")
         emit('user_connected', {'username': username}, broadcast=True)
 
 # Evento para desconectar e remover o usuário do Redis
@@ -148,6 +157,8 @@ def handle_disconnect():
     if username:
         redis_client.srem('logged_in_users', username)
         update_users_list()
+        logout_message = f"{username} saiu do chat."
+        redis_client.rpush('chat_messages', f"system::{logout_message}")
         emit('user_disconnected', {'username': username}, broadcast=True)
 
 # Evento para enviar mensagens

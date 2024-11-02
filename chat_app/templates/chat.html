@@ -9,14 +9,14 @@
 <body>
     <h1>Chat</h1>
     <div class="chat-container">
-      <div id="online-users">
-        <h3>Usuários Online</h3>
-        <ul id="users-list"></ul>
-      </div>
-      <div id="chat-box"></div>
+        <div id="online-users">
+            <h3>Usuários Online</h3>
+            <ul id="users-list"></ul>
+        </div>
+        <div id="chat-box"></div>
     </div>
     <div class="user-input">
-      <div id="typing-indicator" style="display: none;">{{ username }} está digitando...</div>
+        <div id="typing-indicator" style="display: none;">{{ username }} está digitando...</div>
         <button id="logout-button">Sair</button>
         <input type="text" id="message-input" placeholder="Digite sua mensagem">
         <button onclick="sendMessage()">Enviar</button>
@@ -89,6 +89,14 @@
             scrollToBottom();
         });
 
+        socket.on('user_disconnected', data => {
+            const messageContainer = document.createElement('div');
+            messageContainer.textContent = `${data.username} saiu do chat.`;
+            messageContainer.style.fontStyle = 'italic';
+            chatBox.appendChild(messageContainer);
+            scrollToBottom();
+        });
+
         function sendMessage() {
             const message = messageInput.value;
             if (message) {
@@ -118,12 +126,17 @@
                     const usernameSpan = document.createElement('span');
                     const messageSpan = document.createElement('span');
                     const [username, color, ...messageParts] = msg.split(':');
-                    usernameSpan.textContent = `${username}: `;
-                    usernameSpan.style.color = color;
-                    usernameSpan.style.fontWeight = 'bold';
-                    messageSpan.textContent = messageParts.join(':');
-                    messageContainer.appendChild(usernameSpan);
-                    messageContainer.appendChild(messageSpan);
+                    if (username === 'system') {
+                        messageContainer.textContent = messageParts.join(':');
+                        messageContainer.style.fontStyle = 'italic';
+                    } else {
+                        usernameSpan.textContent = `${username}: `;
+                        usernameSpan.style.color = color;
+                        usernameSpan.style.fontWeight = 'bold';
+                        messageSpan.textContent = messageParts.join(':');
+                        messageContainer.appendChild(usernameSpan);
+                        messageContainer.appendChild(messageSpan);
+                    }
                     chatBox.appendChild(messageContainer);
                 });
                 scrollToBottom();
