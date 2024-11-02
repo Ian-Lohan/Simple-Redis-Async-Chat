@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+    <h2>Chat</h2>
+    <div id="chat-box"></div>
+    <div class="user-input">
+      <input type="text" id="message-input" placeholder="Digite sua mensagem">
+      <button onclick="sendMessage()">Enviar</button>
+    </div>
+    <script>
+      const socket = io();
+      const chatBox = document.getElementById('chat-box');
+      socket.on('connect', () => {
+          console.log('Conectado ao servidor.');
+      });
+      socket.on('receive_message', data => {
+        const messageContainer = document.createElement('div');
+        const usernameSpan = document.createElement('span');
+        const messageSpan = document.createElement('span');
+        usernameSpan.textContent = `${data.username}: `;
+        usernameSpan.style.color = data.color;
+        messageSpan.textContent = data.message;
+        messageContainer.appendChild(usernameSpan);
+        messageContainer.appendChild(messageSpan);
+        chatBox.appendChild(messageContainer);
+      });
+      function sendMessage() {
+          const messageInput = document.getElementById('message-input');
+          const message = messageInput.value;
+          if (message) {
+              socket.emit('send_message', { message: message });
+              messageInput.value = '';
+          }
+      }
+      // Carrega mensagens anteriores
+      fetch('/messages')
+        .then(response => response.json())
+        .then(data => {
+            data.messages.forEach(msg => {
+                const messageContainer = document.createElement('div');
+                const usernameSpan = document.createElement('span');
+                const messageSpan = document.createElement('span');
+
+                const [username, color, ...messageParts] = msg.split(':');
+                usernameSpan.textContent = `${username}: `;
+                usernameSpan.style.color = color;
+                messageSpan.textContent = messageParts.join(':');
+                messageContainer.appendChild(usernameSpan);
+                messageContainer.appendChild(messageSpan);
+                chatBox.appendChild(messageContainer);
+            });
+        });
+  </script>
+</body>
+</html>
