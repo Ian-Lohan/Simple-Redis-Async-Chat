@@ -14,13 +14,23 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_respo
 def login():
     if request.method == 'POST':
         username = request.form['username']
+        password = request.form['password']
         color = request.form['color']
-        if username and color:
-            session['username'] = username
-            session['color'] = color
-            # Armazena o usuário logado em Redis
-            redis_client.sadd('logged_in_users', username)
-            return redirect(url_for('chat'))
+        # Verifica se o usuario está cadastrado
+        if username and password and color:
+            user_data = redis_client.hget('users', username)  # Corrigido aqui
+            if user_data:
+                stored_email, stored_password, stored_color = user_data.split(':')
+                if stored_password == password:
+                    session['username'] = username  # Corrigido aqui
+                    session['color'] = stored_color  # Corrigido aqui
+                    # Armazena o usuário logado em Redis
+                    redis_client.sadd('logged_in_users', username)
+                    return redirect(url_for('chat'))
+                else:
+                    return 'Senha incorreta!', 400
+            else:
+                return 'Usuário não encontrado!', 400
     return render_template('login.html')
 
 # Rota para Logout
@@ -40,12 +50,17 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
+        password = request.form['password']
         color = request.form['color']
-        if username and email and color:
-            session['username'] = username
-            session['color'] = color
-            redis_client.sadd('logged_in_users', username)
-            return redirect(url_for('chat'))
+        # Verifica se o usuário já está cadastrado
+        if redis_client.hexists('users', username):
+            return 'Usuário já cadastrado!', 400
+        # Armazena as informações do usuário em Redis
+        redis_client.hset('users', username, f"{email}:{password}:{color}")
+        session['username'] = username
+        session['color'] = color
+        redis_client.sadd('logged_in_users', username)
+        return redirect(url_for('chat'))
     return render_template('register.html')
     
 # Rota para o Chat

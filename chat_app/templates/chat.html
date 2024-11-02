@@ -51,6 +51,11 @@
         }
       });
 
+      // Evento de clique para o botão de logout
+      logoutButton.addEventListener('click', () => {
+          window.location.href = '/logout';
+      });
+
       // Carrega mensagens anteriores
       fetch('/messages')
         .then(response => response.json())
