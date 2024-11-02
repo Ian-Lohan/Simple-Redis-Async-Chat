@@ -8,72 +8,84 @@
 </head>
 <body>
     <h1>Chat</h1>
-    <div id="chat-box"></div>
+    <div class="chat-container">
+        <div id="chat-box"></div>
+        <div id="online-users">
+            <h3>Usuários Online</h3>
+            <ul id="users-list"></ul>
+        </div>
+    </div>
     <div class="user-input">
-      <button id="logout-button">Sair</button>
-      <input type="text" id="message-input" placeholder="Digite sua mensagem">
-      <button onclick="sendMessage()">Enviar</button>
+        <button id="logout-button">Sair</button>
+        <input type="text" id="message-input" placeholder="Digite sua mensagem">
+        <button onclick="sendMessage()">Enviar</button>
     </div>
     <script>
-      const socket = io();
-      const chatBox = document.getElementById('chat-box');
-      const messageInput = document.getElementById('message-input');
-      const logoutButton = document.getElementById('logout-button');
+        const socket = io();
+        const chatBox = document.getElementById('chat-box');
+        const messageInput = document.getElementById('message-input');
+        const logoutButton = document.getElementById('logout-button');
+        const usersList = document.getElementById('users-list');
 
-      socket.on('connect', () => {
-          console.log('Conectado ao servidor.');
-      });
+        socket.on('connect', () => {
+            console.log('Conectado ao servidor.');
+        });
 
-      socket.on('receive_message', data => {
-        const messageContainer = document.createElement('div');
-        const usernameSpan = document.createElement('span');
-        const messageSpan = document.createElement('span');
-        usernameSpan.textContent = `${data.username}: `;
-        usernameSpan.style.color = data.color;
-        messageSpan.textContent = data.message;
-        messageContainer.appendChild(usernameSpan);
-        messageContainer.appendChild(messageSpan);
-        chatBox.appendChild(messageContainer);
-      });
+        socket.on('receive_message', data => {
+            const messageContainer = document.createElement('div');
+            const usernameSpan = document.createElement('span');
+            const messageSpan = document.createElement('span');
+            usernameSpan.textContent = `${data.username}: `;
+            usernameSpan.style.color = data.color;
+            messageSpan.textContent = data.message;
+            messageContainer.appendChild(usernameSpan);
+            messageContainer.appendChild(messageSpan);
+            chatBox.appendChild(messageContainer);
+        });
 
-      function sendMessage() {
-          const messageInput = document.getElementById('message-input');
-          const message = messageInput.value;
-          if (message) {
-              socket.emit('send_message', { message: message });
-              messageInput.value = '';
-          }
-      }
-
-      messageInput.addEventListener('keydown', event => {
-        if (event.key === 'Enter') {
-          sendMessage();
-        }
-      });
-
-      // Evento de clique para o botão de logout
-      logoutButton.addEventListener('click', () => {
-          window.location.href = '/logout';
-      });
-
-      // Carrega mensagens anteriores
-      fetch('/messages')
-        .then(response => response.json())
-        .then(data => {
-            data.messages.forEach(msg => {
-                const messageContainer = document.createElement('div');
-                const usernameSpan = document.createElement('span');
-                const messageSpan = document.createElement('span');
-                const [username, color, ...messageParts] = msg.split(':');
-
-                usernameSpan.textContent = `${username}: `;
-                usernameSpan.style.color = color;
-                messageSpan.textContent = messageParts.join(':');
-                messageContainer.appendChild(usernameSpan);
-                messageContainer.appendChild(messageSpan);
-                chatBox.appendChild(messageContainer);
+        socket.on('update_users', users => {
+            usersList.innerHTML = '';
+            users.forEach(user => {
+                const userItem = document.createElement('li');
+                userItem.textContent = user;
+                usersList.appendChild(userItem);
             });
         });
-  </script>
+
+        function sendMessage() {
+            const message = messageInput.value;
+            if (message) {
+                socket.emit('send_message', { message: message });
+                messageInput.value = '';
+            }
+        }
+
+        messageInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        logoutButton.addEventListener('click', () => {
+            window.location.href = '/logout';
+        });
+
+        fetch('/messages')
+            .then(response => response.json())
+            .then(data => {
+                data.messages.forEach(msg => {
+                    const messageContainer = document.createElement('div');
+                    const usernameSpan = document.createElement('span');
+                    const messageSpan = document.createElement('span');
+                    const [username, color, ...messageParts] = msg.split(':');
+                    usernameSpan.textContent = `${username}: `;
+                    usernameSpan.style.color = color;
+                    messageSpan.textContent = messageParts.join(':');
+                    messageContainer.appendChild(usernameSpan);
+                    messageContainer.appendChild(messageSpan);
+                    chatBox.appendChild(messageContainer);
+                });
+            });
+    </script>
 </body>
 </html>

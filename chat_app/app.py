@@ -38,6 +38,12 @@ def verify_token(token, expiration=3600):
         return None
     return username
 
+
+# Função para atualizar a lista de usuários online
+def update_users_list():
+    users = list(redis_client.smembers('logged_in_users'))
+    socketio.emit('update_users', users, to=None)
+
 # Rota para login
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -136,9 +142,11 @@ def chat():
 
 # Evento de conexão do Socket.IO
 @socketio.on('connect')
-def handle_connect():
+def handle_connect(auth):
     username = session.get('username')
     if username:
+        redis_client.sadd('logged_in_users', username)
+        update_users_list()
         emit('user_connected', {'username': username}, broadcast=True)
 
 # Evento para desconectar e remover o usuário do Redis
@@ -147,6 +155,7 @@ def handle_disconnect():
     username = session.get('username')
     if username:
         redis_client.srem('logged_in_users', username)
+        update_users_list()
         emit('user_disconnected', {'username': username}, broadcast=True)
 
 # Evento para enviar mensagens

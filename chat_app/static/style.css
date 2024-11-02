@@ -74,12 +74,42 @@ form p {
   margin: 0px 10px 0px 5px;
 }
 
+.chat-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
 #chat-box {
-  width: 90%;
+  width: 70%;
   height: 400px;
   background-color: white;
   overflow-y: auto;
   border: 1px solid #ddd;
   padding: 10px;
   margin-bottom: 10px;
+}
+
+#online-users {
+  width: 25%;
+  height: 400px;
+  background-color: white;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+#online-users h3 {
+  text-align: center;
+}
+
+#users-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+#users-list li {
+  padding: 5px 0;
+  border-bottom: 1px solid #ddd;
 }
