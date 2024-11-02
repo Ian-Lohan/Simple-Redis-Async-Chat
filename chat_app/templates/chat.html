@@ -7,18 +7,23 @@
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
 </head>
 <body>
-    <h2>Chat</h2>
+    <h1>Chat</h1>
     <div id="chat-box"></div>
     <div class="user-input">
+      <button id="logout-button">Sair</button>
       <input type="text" id="message-input" placeholder="Digite sua mensagem">
       <button onclick="sendMessage()">Enviar</button>
     </div>
     <script>
       const socket = io();
       const chatBox = document.getElementById('chat-box');
+      const messageInput = document.getElementById('message-input');
+      const logoutButton = document.getElementById('logout-button');
+
       socket.on('connect', () => {
           console.log('Conectado ao servidor.');
       });
+
       socket.on('receive_message', data => {
         const messageContainer = document.createElement('div');
         const usernameSpan = document.createElement('span');
@@ -30,6 +35,7 @@
         messageContainer.appendChild(messageSpan);
         chatBox.appendChild(messageContainer);
       });
+
       function sendMessage() {
           const messageInput = document.getElementById('message-input');
           const message = messageInput.value;
@@ -38,6 +44,13 @@
               messageInput.value = '';
           }
       }
+
+      messageInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          sendMessage();
+        }
+      });
+
       // Carrega mensagens anteriores
       fetch('/messages')
         .then(response => response.json())
@@ -46,8 +59,8 @@
                 const messageContainer = document.createElement('div');
                 const usernameSpan = document.createElement('span');
                 const messageSpan = document.createElement('span');
-
                 const [username, color, ...messageParts] = msg.split(':');
+
                 usernameSpan.textContent = `${username}: `;
                 usernameSpan.style.color = color;
                 messageSpan.textContent = messageParts.join(':');
