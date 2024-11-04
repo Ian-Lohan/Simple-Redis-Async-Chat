@@ -1,8 +1,10 @@
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, session, url_for
 from flask_mail import Mail, Message
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from itsdangerous import URLSafeTimedSerializer
 import redis
+import locale
 from dotenv import load_dotenv
 import os
 
@@ -15,6 +17,8 @@ socketio = SocketIO(app)
 
 # Configuração do Redis
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+
+locale.setlocale(locale.LC_TIME, 'pt_BR.utf8')
 
 # Configuração do Flask-Mail usando variáveis de ambiente
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -147,8 +151,8 @@ def handle_connect(auth):
         redis_client.sadd('logged_in_users', username)
         update_users_list()
         login_message = f"{username} entrou no chat."
-        redis_client.rpush('chat_messages', f"system::{login_message}")
-        emit('user_connected', {'username': username}, broadcast=True)
+        redis_client.rpush('chat_messages', f"system:::{login_message}")
+        emit('user_connected', {'username': username, 'message': login_message}, broadcast=True)
 
 # Evento para desconectar e remover o usuário do Redis
 @socketio.on('disconnect')
@@ -158,8 +162,8 @@ def handle_disconnect():
         redis_client.srem('logged_in_users', username)
         update_users_list()
         logout_message = f"{username} saiu do chat."
-        redis_client.rpush('chat_messages', f"system::{logout_message}")
-        emit('user_disconnected', {'username': username}, broadcast=True)
+        redis_client.rpush('chat_messages', f"system:::{logout_message}")
+        emit('user_disconnected', {'username': username, 'message': logout_message}, broadcast=True)
 
 # Evento para enviar mensagens
 @socketio.on('send_message')
@@ -167,9 +171,11 @@ def handle_send_message(data):
     message = data['message']
     username = session.get('username')
     color = session.get('color')
+    time = datetime.now().strftime('%H:%M:%S')
+
     if username and message:
-        redis_client.rpush('chat_messages', f"{username}:{color}:{message}")
-        emit('receive_message', {'username': username, 'message': message, 'color': color}, broadcast=True)
+        redis_client.rpush('chat_messages', f"{username}:{color}:{message}:{time}")
+        emit('receive_message', {'username': username, 'message': message, 'color': color, 'time': time}, broadcast=True)
 
 # Evento para trocar a cor do usuário
 @socketio.on('change_color')

@@ -1,150 +1,200 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Chat</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
-</head>
-<body>
-    <h1>Chat</h1>
-    <div class="chat-container">
-        <div id="online-users">
-            <h3>Usuários Online</h3>
-            <ul id="users-list"></ul>
+{% extends "base.html" %}
+
+{% block title %}Chat{% endblock %}
+
+{% block content %}
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col text-center">
+          <h1 class="text-center">Chat</h1>
         </div>
-        <div id="chat-box"></div>
-    </div>
-    <div class="user-input">
-        <div id="typing-indicator" style="display: none;">{{ username }} está digitando...</div>
-        <button id="logout-button">Sair</button>
-        <input type="text" id="message-input" placeholder="Digite sua mensagem">
-        <button onclick="sendMessage()">Enviar</button>
+        <div class="col-auto ml-auto">
+          <button id="logout-button" class="btn btn-danger">
+            <i class="fas fa-door-open"></i> Sair
+          </button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <div id="online-users" class="card">
+            <div class="card-header">
+              <h3>Usuários</h3>
+            </div>
+            <ul id="users-list" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+        <div class="col-md-9">
+          <div id="chat-box" class="card">
+            <div
+              class="card-body"
+              style="height: 400px; overflow-y: auto"
+            ></div>
+          </div>
+        </div>
+      </div>
+      <div class="user-input mt-3">
+        <div id="typing-indicator" class="text-muted" style="display: none">
+          {{ username }} está digitando...
+        </div>
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text">{{ username }}</span>
+          </div>
+          <input
+            type="text"
+            id="message-input"
+            class="form-control"
+            placeholder="Digite sua mensagem"
+          />
+          <div class="input-group-append">
+            <button class="btn btn-primary" onclick="sendMessage()">
+              Enviar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
     <script>
-        const socket = io();
-        const chatBox = document.getElementById('chat-box');
-        const messageInput = document.getElementById('message-input');
-        const logoutButton = document.getElementById('logout-button');
-        const usersList = document.getElementById('users-list');
-        const typingIndicator = document.getElementById('typing-indicator');
+      const chatBox = document
+        .getElementById("chat-box")
+        .querySelector(".card-body");
+      const messageInput = document.getElementById("message-input");
+      const logoutButton = document.getElementById("logout-button");
+      const usersList = document.getElementById("users-list");
+      const typingIndicator = document.getElementById("typing-indicator");
+      const socket = io();
 
-        socket.on('connect', () => {
-            console.log('Conectado ao servidor.');
-        });
+      socket.on("connect", () => {
+        console.log("Conectado ao servidor.");
+      });
 
-        socket.on('receive_message', data => {
-            const messageContainer = document.createElement('div');
-            const usernameSpan = document.createElement('span');
-            const messageSpan = document.createElement('span');
-            usernameSpan.textContent = `${data.username}: `;
-            usernameSpan.style.color = data.color;
-            usernameSpan.style.fontWeight = 'bold';
-            messageSpan.textContent = data.message;
-            messageContainer.appendChild(usernameSpan);
-            messageContainer.appendChild(messageSpan);
-            chatBox.appendChild(messageContainer);
-            scrollToBottom();
-        });
+      socket.on("receive_message", (data) => {
+        const messageContainer = document.createElement("div");
+        const usernameSpan = document.createElement("span");
+        const messageSpan = document.createElement("span");
+        const timeSpan = document.createElement("span");
+        usernameSpan.textContent = `${data.username}: `;
+        usernameSpan.style.color = data.color;
+        usernameSpan.style.fontWeight = "bold";
+        messageSpan.textContent = data.message;
+        timeSpan.textContent = ` (${data.time})`;
+        timeSpan.style.fontSize = "0.8em";
+        timeSpan.style.color = "#888";
+        messageContainer.appendChild(usernameSpan);
+        messageContainer.appendChild(messageSpan);
+        messageContainer.appendChild(timeSpan);
+        chatBox.appendChild(messageContainer);
+        scrollToBottom();
+      });
 
-        socket.on('update_users', users => {
-            usersList.innerHTML = '';
-            users.forEach(user => {
-                const userItem = document.createElement('li');
-                const colorSpan = document.createElement('span');
-                colorSpan.style.backgroundColor = user.color;
-                colorSpan.style.width = '10px';
-                colorSpan.style.height = '10px';
-                colorSpan.style.display = 'inline-block';
-                colorSpan.style.marginRight = '5px';
-                userItem.appendChild(colorSpan);
-                userItem.appendChild(document.createTextNode(user.username));
-                userItem.addEventListener('click', () => {
-                    if (user.username === '{{ username }}') {
-                        const newColor = prompt('Digite a nova cor (em formato hexadecimal):', '#000000');
-                        if (newColor) {
-                            socket.emit('change_color', { color: newColor });
-                        }
-                    }
-                });
-                usersList.appendChild(userItem);
-            });
-        });
-
-        socket.on('typing', data => {
-            if (data.username !== '{{ username }}') {
-                typingIndicator.style.display = 'block';
-                typingIndicator.textContent = `${data.username} está digitando...`;
-                setTimeout(() => {
-                    typingIndicator.style.display = 'none';
-                }, 3000);
+      socket.on("update_users", (users) => {
+        usersList.innerHTML = "";
+        users.forEach((user) => {
+          const userItem = document.createElement("li");
+          userItem.classList.add("list-group-item");
+          const colorSpan = document.createElement("span");
+          colorSpan.style.backgroundColor = user.color;
+          colorSpan.style.width = "10px";
+          colorSpan.style.height = "10px";
+          colorSpan.style.display = "inline-block";
+          colorSpan.style.marginRight = "5px";
+          userItem.appendChild(colorSpan);
+          userItem.appendChild(document.createTextNode(user.username));
+          userItem.addEventListener("click", () => {
+            if (user.username === "{{ username }}") {
+              const newColor = prompt(
+                "Digite a nova cor (em formato hexadecimal):",
+                "#000000"
+              );
+              if (newColor) {
+                socket.emit("change_color", { color: newColor });
+              }
             }
+          });
+          usersList.appendChild(userItem);
         });
+      });
 
-        socket.on('user_connected', data => {
-            const messageContainer = document.createElement('div');
-            messageContainer.textContent = `${data.username} entrou no chat.`;
-            messageContainer.style.fontStyle = 'italic';
-            chatBox.appendChild(messageContainer);
-            scrollToBottom();
-        });
-
-        socket.on('user_disconnected', data => {
-            const messageContainer = document.createElement('div');
-            messageContainer.textContent = `${data.username} saiu do chat.`;
-            messageContainer.style.fontStyle = 'italic';
-            chatBox.appendChild(messageContainer);
-            scrollToBottom();
-        });
-
-        function sendMessage() {
-            const message = messageInput.value;
-            if (message) {
-                socket.emit('send_message', { message: message });
-                messageInput.value = '';
-                scrollToBottom();
-            }
+      socket.on("typing", (data) => {
+        if (data.username !== "{{ username }}") {
+          typingIndicator.style.display = "block";
+          typingIndicator.textContent = `${data.username} está digitando...`;
+          setTimeout(() => {
+            typingIndicator.style.display = "none";
+          }, 3000);
         }
+      });
 
-        messageInput.addEventListener('keydown', event => {
-            if (event.key === 'Enter') {
-                sendMessage();
+      socket.on("user_connected", (data) => {
+        const messageContainer = document.createElement("div");
+        messageContainer.textContent = `${data.username} entrou no chat.`;
+        messageContainer.style.fontStyle = "italic";
+        chatBox.appendChild(messageContainer);
+        scrollToBottom();
+      });
+
+      socket.on("user_disconnected", (data) => {
+        const messageContainer = document.createElement("div");
+        messageContainer.textContent = `${data.username} saiu do chat.`;
+        messageContainer.style.fontStyle = "italic";
+        chatBox.appendChild(messageContainer);
+        scrollToBottom();
+      });
+
+      function sendMessage() {
+        const message = messageInput.value;
+        if (message) {
+          const time = new Date().toLocaleTimeString("pt-BR");
+          socket.emit("send_message", { message: message, time: time});
+          messageInput.value = "";
+          scrollToBottom();
+        }
+      }
+
+      messageInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          sendMessage();
+        } else {
+          socket.emit("typing", { username: "{{ username }}" });
+        }
+      });
+
+      logoutButton.addEventListener("click", () => {
+        window.location.href = "/logout";
+      });
+
+      fetch("/messages")
+        .then((response) => response.json())
+        .then((data) => {
+          data.messages.forEach((msg) => {
+            const messageContainer = document.createElement("div");
+            const usernameSpan = document.createElement("span");
+            const messageSpan = document.createElement("span");
+            const timeSpan = document.createElement("span");
+            const [username, color, message, time] = msg.split(":");
+
+            if (username === "system") {
+              messageContainer.textContent = `${message} ${time}`;
+              messageContainer.style.fontStyle = "italic";
             } else {
-                socket.emit('typing', { username: '{{ username }}' });
+              usernameSpan.textContent = `${username}: `;
+              usernameSpan.style.color = color;
+              usernameSpan.style.fontWeight = "bold";
+              messageSpan.textContent = message;
+              timeSpan.textContent = ` (${time})`;
+              timeSpan.style.fontSize = "0.8em";
+              timeSpan.style.color = "#888";
+              messageContainer.appendChild(usernameSpan);
+              messageContainer.appendChild(messageSpan);
+              messageContainer.appendChild(timeSpan);
             }
+            chatBox.appendChild(messageContainer);
+          });
+          scrollToBottom();
         });
 
-        logoutButton.addEventListener('click', () => {
-            window.location.href = '/logout';
-        });
-
-        fetch('/messages')
-            .then(response => response.json())
-            .then(data => {
-                data.messages.forEach(msg => {
-                    const messageContainer = document.createElement('div');
-                    const usernameSpan = document.createElement('span');
-                    const messageSpan = document.createElement('span');
-                    const [username, color, ...messageParts] = msg.split(':');
-                    if (username === 'system') {
-                        messageContainer.textContent = messageParts.join(':');
-                        messageContainer.style.fontStyle = 'italic';
-                    } else {
-                        usernameSpan.textContent = `${username}: `;
-                        usernameSpan.style.color = color;
-                        usernameSpan.style.fontWeight = 'bold';
-                        messageSpan.textContent = messageParts.join(':');
-                        messageContainer.appendChild(usernameSpan);
-                        messageContainer.appendChild(messageSpan);
-                    }
-                    chatBox.appendChild(messageContainer);
-                });
-                scrollToBottom();
-            });
-
-        function scrollToBottom() {
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+      function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
     </script>
-</body>
-</html>
+{% endblock %}

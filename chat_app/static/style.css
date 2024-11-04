@@ -1,62 +1,62 @@
+/* Estilos gerais */
 body {
+  width: 100%;
   font-family: Arial, sans-serif;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  background-color: #f8f9fa;
   margin: 0;
-  background-color: azure;
+  padding: 0;
 }
 
 .container {
-  border: #ddd 1px solid;
-  border-radius: 3px;
-  background-color: white;
+  margin-top: 20px;
 }
 
-h1 {
-  text-align: center;
-  font-size: 48px;
+h1, h2 {
+  color: #343a40;
+  font-weight: bold;
 }
 
-h2 {
-  text-align: center;
+p {
+  color: #6c757d;
 }
 
-form p {
-  justify-content: center;
-  padding: 5px;
-  display: flex;
-  color: rgb(46, 46, 46);
-  font-size: small;
+/* Estilos para formulários */
+.form-group {
+  margin-bottom: 15px;
 }
 
-.user-input {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  margin: 10px 0px;
+.form-control {
+  border-radius: 0.25rem;
+  border: 1px solid #ced4da;
+  font-size: 1rem;
 }
 
-.user-input input[type="text"], .user-input input[type="email"], .user-input input[type="password"] {
-  padding: 10px;
-  margin: 0px 5px 0px 10px;
-  box-sizing: border-box;
+.btn {
+  border-radius: 0.25rem;
+  font-size: 1rem;
 }
 
-.user-input button {
-  padding: 10px 20px;
-  background-color: black;
-  border: none;
-  color: white;
-  border-radius: 3px;
-  cursor: pointer;
-  margin: 0px 10px 0px 5px;
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
 }
 
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+/* Estilos para o chat */
 .chat-container {
   display: flex;
   justify-content: space-between;
@@ -64,7 +64,6 @@ form p {
 }
 
 #chat-box {
-  width: 70%;
   height: 400px;
   background-color: white;
   overflow-y: auto;
@@ -74,7 +73,6 @@ form p {
 }
 
 #online-users {
-  width: 25%;
   height: 400px;
   background-color: white;
   overflow-y: auto;
@@ -97,12 +95,22 @@ form p {
   border-bottom: 1px solid #ddd;
 }
 
+.user-input {
+  margin-top: 20px;
+}
+
+#typing-indicator {
+  font-style: italic;
+  color: #6c757d;
+}
+
+/* Estilos responsivos */
 @media (max-width: 600px) {
   .chat-container {
-    flex-direction: column;
+      flex-direction: column;
   }
 
   #chat-box, #online-users {
-    width: 100%;
+      width: 100%;
   }
 }
