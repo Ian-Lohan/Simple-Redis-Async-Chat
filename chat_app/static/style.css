@@ -9,6 +9,14 @@ body {
 
 .container {
   margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.container form {
+  width: 60%;
 }
 
 h1, h2 {
@@ -34,6 +42,7 @@ p {
 .btn {
   border-radius: 0.25rem;
   font-size: 1rem;
+  margin-bottom: 20px;
 }
 
 .btn-primary {
